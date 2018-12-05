@@ -2,7 +2,7 @@
 
 Hiberthon is a hibernation service for marathon
 
-*ATTENTION This is a proof of concept. Do not run this in production*
+## ATTENTION This is a proof of concept. Do not run this in production
 
 ## Tag the tasks in marathon
 
@@ -40,3 +40,16 @@ Please change the RCU and WCU to your own needs
         },
         "idleDuration": 120
     }
+
+## Parameter
+
+* -db-endpoint DynamoDB endpoint (Required)
+* -db-region DynamoDB region (Required)
+* -db-key DynamoDB credential key
+* -db-secret DynamoDB credential secret
+* -marathon-endpoint DynamoDB endpoint (Required)
+* -listener Web listener (Required)
+
+## Environment variables
+
+Every parameter is also available as env var. E.g. -db-endpoint becomes HIBERTHON_DB_ENDPOINT etc. pp.
