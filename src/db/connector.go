@@ -7,6 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+const tableName = "Hibernate"
+
 // ConnectorConfig model
 type ConnectorConfig struct {
 	Endpoint  string
@@ -18,13 +20,16 @@ type ConnectorConfig struct {
 
 // Connector model
 type Connector struct {
-	Session *session.Session
-	Service *dynamodb.DynamoDB
+	Session   *session.Session
+	Service   *dynamodb.DynamoDB
+	TableName string
 }
 
 // NewConnector creates a new db connector
 func NewConnector(c ConnectorConfig) (*Connector, error) {
-	connector := &Connector{}
+	connector := &Connector{
+		TableName: tableName,
+	}
 
 	config := &aws.Config{
 		Region: aws.String(c.Region),

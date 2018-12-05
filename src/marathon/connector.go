@@ -13,7 +13,7 @@ type ConnectorConfig struct {
 
 // Connector model
 type Connector struct {
-	client gomarathon.Marathon
+	Client gomarathon.Marathon
 }
 
 // NewConnector creates a new marathon connector
@@ -28,7 +28,7 @@ func NewConnector(c ConnectorConfig) (*Connector, error) {
 		return nil, fmt.Errorf("marathon connector: %s", err)
 	}
 
-	connector.client = client
+	connector.Client = client
 
 	return connector, nil
 }

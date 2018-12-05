@@ -6,7 +6,7 @@ CONTENT=$3
 
 echo "Generate static web content"
 
-FILES=`find ${CONTENT} -type f | grep '^.*\(html\|js\)'`
+FILES=`find ${CONTENT} -type f | grep '^.*\(html\|js\|svg\|css\)'`
 
 MAPDEF=""
 
@@ -26,9 +26,9 @@ package ${PACKAGE}
 import (
 	"encoding/base64"
 	"log"
+	"path/filepath"
+	"strings"
 	"text/template"
-    "strings"
-    "path/filepath"
 )
 
 // WebEntry single entry
@@ -37,6 +37,8 @@ type WebEntry struct {
 	ContentType string
 	// Buffer of static file
 	Buffer []byte
+    // Template
+	Template *template.Template
 }
 
 // StaticContent mapper for files
@@ -52,12 +54,22 @@ func (sw *StaticContent) Add(p string, b string) {
         log.Fatalf("Unable to decode static file")
     }
 
+    var t *template.Template
+
     contentType := "text/plain"
 	switch ext := strings.ToLower(filepath.Ext(p)); ext {
-	case ".png":
+    case ".svg", ".svgz":
+        contentType = "image/svg+xml"
+	case ".css":
+		contentType = "text/css"
+    case ".png":
 		contentType = "application/png"
 	case ".html":
-		contentType = "text/html"
+        contentType = "text/html"
+		t = sw.Template.New(p)
+		if _, err := t.Parse(string(decoded)); err != nil {
+			log.Fatal(err)
+		}
 	case ".js":
 		contentType = "text/javascript"
 	}
@@ -65,6 +77,7 @@ func (sw *StaticContent) Add(p string, b string) {
 	sw.PathMapper[p] = WebEntry{
 		Buffer:      decoded,
 		ContentType: contentType,
+        Template:    t,
 	}
 }
 
@@ -79,14 +92,5 @@ func init() {
 	}
     
 ${MAPDEF}
-    // generate templates
-	for k, v := range Content.PathMapper {
-		name := k
-        log.Printf("Parsing template %s", name)
-		t := Content.Template.New(name)
-		if _, err := t.Parse(string(v.Buffer)); err != nil {
-			log.Fatal(err)
-		}
-	}
 }
 EOF
