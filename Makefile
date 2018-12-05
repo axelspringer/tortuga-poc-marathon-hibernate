@@ -62,3 +62,10 @@ generate:
 build/hiberthon: generate
 	$(GO) build -ldflags "-X main.Version=$(VERSION)" -o $(BIN_HIBERTHON) $(GOFLAGS) $(RACE) src/cli/hiberthon/*
 	$(GO) build -ldflags "-X main.Version=$(VERSION)" -o $(BIN_HIBERTHON_TRIGGER) $(GOFLAGS) $(RACE) src/cli/hiberthon-trigger/main.go
+
+build/hiberthon/static:
+	CGO_ENABLED=0 $(GO) build -a -installsuffix cgo -ldflags "-w -s" -o $(BIN_HIBERTHON) src/cli/hiberthon/*
+
+build/trigger/static:
+	CGO_ENABLED=0 $(GO) build -a -installsuffix cgo -ldflags "-w -s" -o $(BIN_HIBERTHON) src/cli/hiberthon-trigger/*
+
