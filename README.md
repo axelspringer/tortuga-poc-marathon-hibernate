@@ -2,6 +2,8 @@
 
 Hiberthon is a hibernation service for marathon
 
+*ATTENTION This is a proof of concept. Do not run this in production*
+
 ## Tag the tasks in marathon
 
 Set ```"hiberthon.enable": "true"``` to activate hibernation for this application. Set ```"hiberthon.group": "0CD7EB62-1ACF-4EB3-B776-8CBF190D410D"``` to the id.
