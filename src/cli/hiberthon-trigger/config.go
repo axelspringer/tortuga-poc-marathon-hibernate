@@ -10,6 +10,7 @@ import (
 const (
 	envPrefix             = "HIBERTHON_"
 	defaultCollectionTime = 10
+	defaultHostUpdateTime = 30
 )
 
 // getOSPrefixEnv get os env
@@ -38,22 +39,24 @@ func getFlagPtr(name string, doc string) *string {
 
 // Configuration model
 type Configuration struct {
-	webhookURL     string
+	endpointURL    string
 	logfilePath    string
 	format         string
 	collectionTime int
+	hostUpdateTime int
 }
 
 func (c *Configuration) Read() {
-	webhookURLPtr := getFlagPtr("webhook", "Webhook for the hiberthon api (Required)")
+	endpointURLPtr := getFlagPtr("endpoint", "Endpoint for the hiberthon API (Required)")
 	logfilePathPtr := getFlagPtr("logfile", "Path to the logfile to watch (Required)")
 	logFormatPtr := getFlagPtr("format", "Logfile like \"clf\" (Required)")
 	collectionTimePtr := getFlagPtr("collection-time", "in seconds (default 10s)")
+	hostUpdateTimePtr := getFlagPtr("host-update-time", "in seconds (default 30s)")
 
 	flag.Parse()
 
-	if webhookURLPtr != nil && *webhookURLPtr != "" {
-		c.webhookURL = *webhookURLPtr
+	if endpointURLPtr != nil && *endpointURLPtr != "" {
+		c.endpointURL = *endpointURLPtr
 	}
 
 	if logfilePathPtr != nil && *logfilePathPtr != "" {
@@ -70,6 +73,15 @@ func (c *Configuration) Read() {
 		c.collectionTime, _ = strconv.Atoi(ct)
 		if c.collectionTime == 0 {
 			c.collectionTime = defaultCollectionTime
+		}
+	}
+
+	c.hostUpdateTime = defaultHostUpdateTime
+	if hostUpdateTimePtr != nil && *hostUpdateTimePtr != "" {
+		ut := *hostUpdateTimePtr
+		c.hostUpdateTime, _ = strconv.Atoi(ut)
+		if c.hostUpdateTime == 0 {
+			c.hostUpdateTime = defaultHostUpdateTime
 		}
 	}
 }

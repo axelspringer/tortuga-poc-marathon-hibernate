@@ -1,11 +1,19 @@
 package net
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/axelspringer/tortuga-poc-marathon-hibernate/src/db"
 	"github.com/axelspringer/tortuga-poc-marathon-hibernate/src/hibernate"
 	"github.com/axelspringer/tortuga-poc-marathon-hibernate/src/marathon"
+	"github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
 )
 
 //go:generate sh ./../../scripts/gen_static.sh content.go net ./../../web
@@ -39,51 +47,92 @@ func (b Bumper) serveAPIState(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	he := db.HostEntry{
-		State: "hibernate",
-	}
+	if strings.HasPrefix(r.URL.Path, "/-") {
+		path := strings.TrimPrefix(r.URL.Path, "/-")
 
-	if r.URL.Path == "/api/state" {
-		b.serveAPIState(w, r)
-		return
-	}
-
-	if r.URL.Path == "/api/alive" {
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(200)
-		w.Write([]byte(he.ToJSON()))
-		return
-	}
-
-	// hit static non templated content
-	if v, ok := Content.PathMapper[r.URL.Path]; ok && v.Template == nil {
-		w.Header().Add("Content-Type", v.ContentType)
-		w.Write(v.Buffer)
-		return
-	}
-
-	// hit content
-	if r.URL.Path == "/" || r.URL.Path == "index.html" {
-		if v, ok := Content.PathMapper["/index.html"]; ok {
+		// hit static non templated content
+		if v, ok := Content.PathMapper[path]; ok && v.Template == nil {
 			w.Header().Add("Content-Type", v.ContentType)
-			v.Template.Execute(w, he)
-
-			// heartbeat
-			h := r.Host
-			b.State.Lock()
-			defer b.State.Unlock()
-			if gID, ok := b.State.HostLookup[h]; ok {
-				b.HostModel.UpdateLatestUsage(gID)
-			}
+			w.Write(v.Buffer)
 			return
 		}
 	}
 
-	// hit 404
-	http.NotFound(w, r)
+	b.redirectHandler(w, r)
+}
+
+func (b *Bumper) getIndexHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	path := strings.TrimPrefix(r.URL.Path, "/-")
+
+	// hit content
+	if path == "/" {
+		if v, ok := Content.PathMapper["/index.html"]; ok {
+			w.Header().Add("Content-Type", v.ContentType)
+			v.Template.Execute(w, nil)
+
+			// heartbeat
+			//h := r.Host
+			//b.State.SignOfLife([]string{h}, b.HostModel)
+			return
+		}
+	}
+}
+
+func (b *Bumper) collectActivityHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Error(err)
+		http.Error(w, "invalid post data", 400)
+	}
+	defer r.Body.Close()
+
+	var hostList []string
+	decoder := json.NewDecoder(bytes.NewReader(body))
+	if err := decoder.Decode(&hostList); err != nil {
+		log.Error(err)
+	}
+	b.State.SignOfLife(hostList, b.HostModel)
+
+	w.WriteHeader(201)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Write([]byte("{}"))
+}
+
+func (b *Bumper) getHostHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	hostList := []string{}
+	for k := range b.State.HostLookup {
+		hostList = append(hostList, k)
+	}
+
+	data, _ := json.Marshal(hostList)
+
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(data)
+}
+
+func (b *Bumper) redirectHandler(w http.ResponseWriter, r *http.Request) {
+	redirectURL := url.URL{
+		Scheme: r.URL.Scheme,
+		Host:   r.URL.Host,
+		User:   r.URL.User,
+		Path:   "/-/",
+	}
+
+	qs := redirectURL.Query()
+	qs.Set("t", base64.StdEncoding.EncodeToString([]byte(r.URL.String())))
+
+	redirectURL.RawQuery = qs.Encode()
+	http.Redirect(w, r, redirectURL.String(), 307)
 }
 
 // Run bumper web service
 func (b Bumper) Run() error {
-	return http.ListenAndServe(b.Listener, b)
+	router := httprouter.New()
+	router.GET("/-/", b.getIndexHandler)
+	router.GET("/-/api/trigger", b.getHostHandler)
+	router.POST("/-/api/trigger", b.collectActivityHandler)
+	router.NotFound = b
+
+	return http.ListenAndServe(b.Listener, router)
 }

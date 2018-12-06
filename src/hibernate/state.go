@@ -161,3 +161,15 @@ func (s *State) Update(hostManager *db.HostEntryManager, m *marathonManager.Mana
 	s.HostLookup = hostLookup
 	s.GroupMap = groupMap
 }
+
+// SignOfLife marks a list of hosts as alive
+func (s *State) SignOfLife(hosts []string, hostManager *db.HostEntryManager) {
+	s.Lock()
+	defer s.Unlock()
+
+	for _, h := range hosts {
+		if gID, ok := s.HostLookup[h]; ok {
+			hostManager.UpdateLatestUsage(gID)
+		}
+	}
+}
