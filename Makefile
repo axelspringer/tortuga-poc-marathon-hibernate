@@ -67,5 +67,5 @@ build/hiberthon/static:
 	CGO_ENABLED=0 $(GO) build -a -installsuffix cgo -ldflags "-w -s" -o $(BIN_HIBERTHON) src/cli/hiberthon/*
 
 build/trigger/static:
-	CGO_ENABLED=0 $(GO) build -a -installsuffix cgo -ldflags "-w -s" -o $(BIN_HIBERTHON) src/cli/hiberthon-trigger/*
+	CGO_ENABLED=0 $(GO) build -a -installsuffix cgo -ldflags "-w -s" -o $(BIN_HIBERTHON_TRIGGER) src/cli/hiberthon-trigger/*
 

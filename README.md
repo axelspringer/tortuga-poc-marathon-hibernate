@@ -53,3 +53,25 @@ Please change the RCU and WCU to your own needs
 ## Environment variables
 
 Every parameter is also available as env var. E.g. -db-endpoint becomes HIBERTHON_DB_ENDPOINT etc. pp.
+
+## :punch: Hiberthon trigger
+
+Hiberthon trigger is a little helper tool to tell if a host is active. This can be done by read access logs along.
+
+### Trigger Parameter
+
+* -webhook *url* Webhook for the hiberthon api (Required)
+* -logfile *path* Path to the logfile to watch (Required)
+* -format *fmt* like "clf" (Required)
+* -collection-time *time* in seconds (default 10s)
+
+### Example
+
+Assume a access log format like "%h %..."
+Parse it with a regex (more costly)
+
+    ./bin/hiberthon-trigger -format "regex:(?m:^[^ ]+)" -logfile access_log.log
+
+Or as a per line indexed sequence splitted up by a separator (less costs if you know the structure)
+
+    ./bin/hiberthon-trigger -format "seq: :0" -logfile access_log.log
