@@ -20,5 +20,3 @@ LABEL maintainer="jan.michalowsky@axelspringer.com"
 COPY --from=go_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=go_builder /go/src/github.com/axelspringer/tortuga-poc-marathon-hibernate/bin/hiberthon /hiberthon
 COPY --from=go_builder /go/src/github.com/axelspringer/tortuga-poc-marathon-hibernate/bin/hiberthon-trigger /hiberthon-trigger
-
-ENTRYPOINT ["/hiberthon"]
