@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strings"
 
@@ -48,6 +49,9 @@ func (b Bumper) serveAPIState(w http.ResponseWriter, r *http.Request) {
 
 func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Infof("fallback ServeHTTP r.URL %#v", r.URL)
+
+	requestDump, _ := httputil.DumpRequest(r, true)
+	log.Infof("%s", string(requestDump))
 
 	if strings.HasPrefix(r.URL.Path, "/-") {
 		path := strings.TrimPrefix(r.URL.Path, "/-")
@@ -121,9 +125,14 @@ func (b *Bumper) getHostHandler(w http.ResponseWriter, r *http.Request, p httpro
 }
 
 func (b *Bumper) redirectHandler(w http.ResponseWriter, r *http.Request) {
+	host := r.URL.Host
+	if len(host) == 0 {
+		host = r.Host
+	}
+
 	redirectURL := url.URL{
 		Scheme: r.URL.Scheme,
-		Host:   r.URL.Host,
+		Host:   host,
 		User:   r.URL.User,
 		Path:   "/-/",
 	}
