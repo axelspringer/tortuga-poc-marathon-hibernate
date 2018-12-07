@@ -47,8 +47,11 @@ func (b Bumper) serveAPIState(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Infof("fallback ServeHTTP r.URL %#v", r.URL, redirectURL)
+
 	if strings.HasPrefix(r.URL.Path, "/-") {
 		path := strings.TrimPrefix(r.URL.Path, "/-")
+		log.Infof("Serve static files %s", path)
 
 		// hit static non templated content
 		if v, ok := Content.PathMapper[path]; ok && v.Template == nil {
@@ -63,6 +66,8 @@ func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (b *Bumper) getIndexHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	path := strings.TrimPrefix(r.URL.Path, "/-")
+
+	log.Infof("indexHandler r.URL %#v path %s", r.URL, path)
 
 	// hit content
 	if path == "/" {
@@ -86,11 +91,15 @@ func (b *Bumper) collectActivityHandler(w http.ResponseWriter, r *http.Request, 
 	}
 	defer r.Body.Close()
 
+	log.Infof("collectActivityHandler %s", string(body))
+
 	var hostList []string
 	decoder := json.NewDecoder(bytes.NewReader(body))
 	if err := decoder.Decode(&hostList); err != nil {
 		log.Error(err)
 	}
+	log.Infof("SignOfLife %s#v", hostList)
+
 	b.State.SignOfLife(hostList, b.HostModel)
 
 	w.WriteHeader(201)
@@ -121,6 +130,8 @@ func (b *Bumper) redirectHandler(w http.ResponseWriter, r *http.Request) {
 
 	qs := redirectURL.Query()
 	qs.Set("t", base64.StdEncoding.EncodeToString([]byte(r.URL.String())))
+
+	log.Infof("redirectHandler r.URL %#v redirect %#v", r.URL, redirectURL)
 
 	redirectURL.RawQuery = qs.Encode()
 	http.Redirect(w, r, redirectURL.String(), 307)
