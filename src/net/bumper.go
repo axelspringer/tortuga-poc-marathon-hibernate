@@ -125,20 +125,17 @@ func (b *Bumper) getHostHandler(w http.ResponseWriter, r *http.Request, p httpro
 }
 
 func (b *Bumper) redirectHandler(w http.ResponseWriter, r *http.Request) {
-	host := r.URL.Host
-	if len(host) == 0 {
-		host = r.Host
-	}
+	u, _ := url.Parse(r.Referer())
 
 	redirectURL := url.URL{
-		Scheme: r.URL.Scheme,
-		Host:   host,
-		User:   r.URL.User,
+		Scheme: u.Scheme,
+		Host:   u.Host,
+		User:   u.User,
 		Path:   "/-/",
 	}
 
 	qs := redirectURL.Query()
-	qs.Set("t", base64.StdEncoding.EncodeToString([]byte(r.URL.String())))
+	qs.Set("t", base64.StdEncoding.EncodeToString([]byte(r.Referer())))
 
 	log.Infof("redirectHandler r.URL %#v redirect %#v", r.URL, redirectURL)
 
