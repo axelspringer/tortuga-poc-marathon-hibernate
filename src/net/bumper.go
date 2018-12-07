@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"strings"
 
@@ -50,9 +49,7 @@ func (b Bumper) serveAPIState(w http.ResponseWriter, r *http.Request) {
 func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Infof("fallback ServeHTTP r.URL %#v", r.URL)
 
-	requestDump, _ := httputil.DumpRequest(r, true)
-	log.Infof("%s", string(requestDump))
-
+	// internal
 	if strings.HasPrefix(r.URL.Path, "/-") {
 		path := strings.TrimPrefix(r.URL.Path, "/-")
 		log.Infof("Serve static files %s", path)
@@ -125,7 +122,14 @@ func (b *Bumper) getHostHandler(w http.ResponseWriter, r *http.Request, p httpro
 }
 
 func (b *Bumper) redirectHandler(w http.ResponseWriter, r *http.Request) {
-	u, _ := url.Parse(r.Referer())
+	referer := r.Referer()
+	u, err := url.Parse(referer)
+
+	if err != nil {
+		log.Error(err)
+		http.Error(w, err.Error(), 400)
+		return
+	}
 
 	redirectURL := url.URL{
 		Scheme: u.Scheme,
@@ -135,11 +139,11 @@ func (b *Bumper) redirectHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	qs := redirectURL.Query()
-	qs.Set("t", base64.StdEncoding.EncodeToString([]byte(r.Referer())))
-
-	log.Infof("redirectHandler r.URL %#v redirect %#v", r.URL, redirectURL)
-
+	qs.Set("t", base64.StdEncoding.EncodeToString([]byte(referer)))
 	redirectURL.RawQuery = qs.Encode()
+
+	log.Infof("redirectHandler redirect %s", redirectURL.String())
+
 	http.Redirect(w, r, redirectURL.String(), 307)
 }
 
