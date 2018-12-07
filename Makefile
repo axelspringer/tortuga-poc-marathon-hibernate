@@ -31,7 +31,7 @@ build/docker:
 
 push/docker:
 	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
-	docker push $(IMAGE)
+	docker push $(IMAGE_HIBERTHON)
 
 generate:
 	$(GO) generate src/net/bumper.go
