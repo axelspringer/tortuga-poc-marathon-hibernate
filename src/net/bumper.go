@@ -47,7 +47,7 @@ func (b Bumper) serveAPIState(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Infof("fallback ServeHTTP r.URL %#v", r.URL, redirectURL)
+	log.Infof("fallback ServeHTTP r.URL %#v", r.URL)
 
 	if strings.HasPrefix(r.URL.Path, "/-") {
 		path := strings.TrimPrefix(r.URL.Path, "/-")
