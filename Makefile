@@ -17,12 +17,11 @@ help:
 	@echo 'Available commands:'
 	@echo
 	@echo 'Usage:'
-	@echo '    make deps     		Install go deps.'
-	@echo '    make build/local    	Compile the project.'
-	@echo '    make test/local    	Run ginkgo test suites.'
-	@echo '    make build/docker    Create docker container'
-	@echo '    make clean    		Clean the directory tree.'
-	@echo
+	@echo '    make deps     		          Install go deps.'
+	@echo '    make build/docker              Create docker container with hiberthon and the trigger.'
+	@echo '    make generate    	          Generate template assets.'
+	@echo '    make build/hiberthon/static    Build static linked version of hiberthon'
+	@echo '    make build/trigger/static      Build static linked version of hiberthon-trigger'
 
 deps:
 	go get ./...

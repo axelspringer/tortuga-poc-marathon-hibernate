@@ -4,6 +4,17 @@ Hiberthon is a hibernation service for marathon
 
 ## ATTENTION This is a proof of concept. Do not run this in production
 
+## Build
+
+Build hiberthon
+
+    make generate
+    make build/hiberthon/static
+
+Build the trigger
+
+    make build/hiberthon/static
+
 ## Tag the tasks in marathon
 
 Set ```"hiberthon.enable": "true"``` to activate hibernation for this application. Set ```"hiberthon.group": "0CD7EB62-1ACF-4EB3-B776-8CBF190D410D"``` to the id.
@@ -60,10 +71,11 @@ Hiberthon trigger is a little helper tool to tell if a host is active. This can 
 
 ### Trigger Parameter
 
-* -webhook *url* Webhook for the hiberthon api (Required)
+* -endpoint *url* Endpoint for the hiberthon api (Required)
 * -logfile *path* Path to the logfile to watch (Required)
-* -format *fmt* like "clf" (Required)
+* -format *fmt* "traefik:clf" is currently the only one (Required)
 * -collection-time *time* in seconds (default 10s)
+* -host-update-time *time* in seconds (default 30s)
 
 ### Example
 
