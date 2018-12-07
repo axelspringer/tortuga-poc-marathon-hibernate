@@ -113,7 +113,11 @@ func NewFileWatcher(filePath string, format string) *FileWatcher {
 		log.Info("set traefik clf process handler")
 		fw.ProcessHandler = traefikCLFProcessHandler(format, fw)
 	}
-
+	// set the initial offset
+	if st, err := os.Stat(fw.FileName); err == nil {
+		fw.OldFilePosition = st.Size()
+	}
+	
 	return fw
 }
 

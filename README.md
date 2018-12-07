@@ -71,4 +71,4 @@ Assume a access log format like traefiks CLF
 
     10.255.0.14 - - [12/Mar/2018:16:57:53 +0000] "POST /api/v4/jobs/request HTTP/1.1" 204 0 - "gitlab-runner 10.0.2 (10-0-stable; go1.8.3; windows/amd64)" 147 "Host-gitlab-14" "http://10.0.0.19:80" 4ms
 
-    ./bin/hiberthon-trigger -format "traefik:clf" -logfile traefik.log -endpoint http://hiberthon/api/trigger
+    ./bin/hiberthon-trigger -format "traefik:clf" -logfile traefik.log -endpoint http://hiberthon/-/api/trigger -collection-time 5 -host-update-time 10
