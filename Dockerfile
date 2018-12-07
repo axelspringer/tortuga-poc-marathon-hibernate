@@ -14,11 +14,13 @@ RUN make build/hiberthon/static
 RUN make build/trigger/static
 
 # BUILD
-FROM scratch
+FROM alpine:latest
 LABEL maintainer="jan.michalowsky@axelspringer.com"
 
-COPY --from=go_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=go_builder /go/src/github.com/axelspringer/tortuga-poc-marathon-hibernate/bin/hiberthon /hiberthon
-COPY --from=go_builder /go/src/github.com/axelspringer/tortuga-poc-marathon-hibernate/bin/hiberthon-trigger /hiberthon-trigger
+RUN apk update && apk add ca-certificates
 
-CMD [ "/hiberthon" ]
+COPY --from=go_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=go_builder /go/src/github.com/axelspringer/tortuga-poc-marathon-hibernate/bin/hiberthon /usr/bin/hiberthon
+COPY --from=go_builder /go/src/github.com/axelspringer/tortuga-poc-marathon-hibernate/bin/hiberthon-trigger /usr/bin/hiberthon-trigger
+
+CMD [ "/usr/bin/hiberthon" ]
