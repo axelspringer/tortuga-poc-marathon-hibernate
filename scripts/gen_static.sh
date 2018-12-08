@@ -28,7 +28,7 @@ import (
 	"log"
 	"path/filepath"
 	"strings"
-	"text/template"
+	"html/template"
 )
 
 // WebEntry single entry

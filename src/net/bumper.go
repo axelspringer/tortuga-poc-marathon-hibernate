@@ -2,7 +2,6 @@ package net
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -26,26 +25,6 @@ type Bumper struct {
 	State           *hibernate.State
 }
 
-func (b Bumper) serveAPIState(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
-
-	qsHost := r.URL.Query().Get("host")
-	gID, ok := b.State.HostLookup[qsHost]
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-
-	he, ok := b.State.GroupMap[gID]
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-
-	w.WriteHeader(200)
-	w.Write([]byte(he.ToJSON()))
-}
-
 func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Infof("fallback ServeHTTP r.URL %#v", r.URL)
 
@@ -62,7 +41,20 @@ func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	b.redirectHandler(w, r)
+	u, err := url.Parse(r.Referer())
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	ctxData := u.Host
+	log.Infof("ctxData %s", ctxData)
+	b.State.SignOfLife([]string{ctxData}, b.HostModel)
+
+	// index
+	v := Content.PathMapper["/index.html"]
+	w.Header().Add("Content-Type", v.ContentType)
+	v.Template.Execute(w, ctxData)
 }
 
 func (b *Bumper) getIndexHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -121,36 +113,29 @@ func (b *Bumper) getHostHandler(w http.ResponseWriter, r *http.Request, p httpro
 	w.Write(data)
 }
 
-func (b *Bumper) redirectHandler(w http.ResponseWriter, r *http.Request) {
-	referer := r.Referer()
-	u, err := url.Parse(referer)
-
-	if err != nil {
-		log.Error(err)
-		http.Error(w, err.Error(), 400)
+func (b *Bumper) getHostStateHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	qsHost := r.URL.Query().Get("host")
+	gID, ok := b.State.HostLookup[qsHost]
+	if !ok {
+		http.NotFound(w, r)
 		return
 	}
 
-	redirectURL := url.URL{
-		Scheme: u.Scheme,
-		Host:   u.Host,
-		User:   u.User,
-		Path:   "/-/",
+	he, ok := b.State.GroupMap[gID]
+	if !ok {
+		http.NotFound(w, r)
+		return
 	}
 
-	qs := redirectURL.Query()
-	qs.Set("t", base64.StdEncoding.EncodeToString([]byte(referer)))
-	redirectURL.RawQuery = qs.Encode()
-
-	log.Infof("redirectHandler redirect %s", redirectURL.String())
-
-	http.Redirect(w, r, redirectURL.String(), 307)
+	w.WriteHeader(200)
+	w.Write([]byte(he.ToJSON()))
 }
 
 // Run bumper web service
 func (b Bumper) Run() error {
 	router := httprouter.New()
 	router.GET("/-/", b.getIndexHandler)
+	router.GET("/-/api/state", b.getHostStateHandler)
 	router.GET("/-/api/trigger", b.getHostHandler)
 	router.POST("/-/api/trigger", b.collectActivityHandler)
 	router.NotFound = b

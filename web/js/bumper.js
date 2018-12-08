@@ -39,7 +39,7 @@
                 stateElement.innerHTML = stateText;
             }
         };
-        xhr.open('GET', 'api/state?host=' + HiberthonHost);
+        xhr.open('GET', '/-/api/state?host=' + HiberthonHost);
         xhr.send();
     }
 
