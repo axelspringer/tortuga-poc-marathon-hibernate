@@ -2,6 +2,7 @@ package net
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -26,13 +27,9 @@ type Bumper struct {
 }
 
 func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Infof("fallback ServeHTTP r.URL %#v", r.URL)
-
 	// internal
 	if strings.HasPrefix(r.URL.Path, "/-") {
 		path := strings.TrimPrefix(r.URL.Path, "/-")
-		log.Infof("Serve static files %s", path)
-
 		// hit static non templated content
 		if v, ok := Content.PathMapper[path]; ok && v.Template == nil {
 			w.Header().Add("Content-Type", v.ContentType)
@@ -48,7 +45,6 @@ func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctxData := u.Host
-	log.Infof("ctxData %s", ctxData)
 	b.State.SignOfLife([]string{ctxData}, b.HostModel)
 
 	// index
@@ -60,17 +56,11 @@ func (b Bumper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (b *Bumper) getIndexHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	path := strings.TrimPrefix(r.URL.Path, "/-")
 
-	log.Infof("indexHandler r.URL %#v path %s", r.URL, path)
-
 	// hit content
 	if path == "/" {
 		if v, ok := Content.PathMapper["/index.html"]; ok {
 			w.Header().Add("Content-Type", v.ContentType)
 			v.Template.Execute(w, nil)
-
-			// heartbeat
-			//h := r.Host
-			//b.State.SignOfLife([]string{h}, b.HostModel)
 			return
 		}
 	}
@@ -83,8 +73,6 @@ func (b *Bumper) collectActivityHandler(w http.ResponseWriter, r *http.Request, 
 		http.Error(w, "invalid post data", 400)
 	}
 	defer r.Body.Close()
-
-	log.Infof("collectActivityHandler %s", string(body))
 
 	var hostList []string
 	decoder := json.NewDecoder(bytes.NewReader(body))
@@ -107,15 +95,20 @@ func (b *Bumper) getHostHandler(w http.ResponseWriter, r *http.Request, p httpro
 	}
 
 	data, _ := json.Marshal(hostList)
-
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(200)
 	w.Write(data)
 }
 
 func (b *Bumper) getHostStateHandler(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	qsHost := r.URL.Query().Get("host")
-	gID, ok := b.State.HostLookup[qsHost]
+	buffer, err := base64.StdEncoding.DecodeString(r.URL.Query().Get("host"))
+
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	gID, ok := b.State.HostLookup[string(buffer)]
 	if !ok {
 		http.NotFound(w, r)
 		return
