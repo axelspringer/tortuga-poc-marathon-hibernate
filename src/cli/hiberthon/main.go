@@ -49,7 +49,7 @@ func main() {
 		State:           state,
 	}
 
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(time.Duration(config.stateUpdateTime) * time.Second)
 	quit := make(chan struct{})
 	go func() {
 		for {

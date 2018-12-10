@@ -60,6 +60,7 @@ Please change the RCU and WCU to your own needs
 * -db-secret DynamoDB credential secret
 * -marathon-endpoint DynamoDB endpoint (Required)
 * -listener Web listener (Required)
+* -state-update
 
 ## Environment variables
 

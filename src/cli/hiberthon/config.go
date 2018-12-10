@@ -3,11 +3,13 @@ package main
 import (
 	"flag"
 	"os"
+	"strconv"
 	"strings"
 )
 
 const (
-	envPrefix = "HIBERTHON_"
+	envPrefix              = "HIBERTHON_"
+	defaultStateUpdateTime = 10
 )
 
 // getOSPrefixEnv get os env
@@ -35,6 +37,7 @@ type Configuration struct {
 	dbTablePrefix    string
 	marathonEndpoint string
 	httpListener     string
+	stateUpdateTime  int
 }
 
 func (c *Configuration) Read() {
@@ -45,6 +48,7 @@ func (c *Configuration) Read() {
 	dbTablePrefixPtr := getFlagPtr("db-table-prefix", "DynamoDB table name prefix")
 	marathonEndpointPtr := getFlagPtr("marathon-endpoint", "DynamoDB endpoint (Required)")
 	httpListenerPtr := getFlagPtr("listener", "Web listener (Required)")
+	stateUpdateTimePtr := getFlagPtr("state-update", "State update interval tim in seconds (default 10)")
 
 	flag.Parse()
 
@@ -71,5 +75,14 @@ func (c *Configuration) Read() {
 
 	if httpListenerPtr != nil && *httpListenerPtr != "" {
 		c.httpListener = *httpListenerPtr
+	}
+
+	c.stateUpdateTime = defaultStateUpdateTime
+	if stateUpdateTimePtr != nil && *stateUpdateTimePtr != "" {
+		ct := *stateUpdateTimePtr
+		c.stateUpdateTime, _ = strconv.Atoi(ct)
+		if c.stateUpdateTime == 0 {
+			c.stateUpdateTime = defaultStateUpdateTime
+		}
 	}
 }
